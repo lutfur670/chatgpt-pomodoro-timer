@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pomodoro Timer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @keyframes pulseSoft {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.4); }
+      50% { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+    }
+    .pulse-running {
+      animation: pulseSoft 2s infinite;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-200 flex items-center justify-center min-h-screen">
+
+<!-- APP -->
+<div class="w-[420px] h-[620px] bg-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col">
+
+  <!-- HEADER -->
+  <header class="px-8 pt-8 pb-4 flex justify-between items-center">
+    <h1 class="text-lg font-semibold tracking-wide text-gray-800">Pomodoro</h1>
+    <div class="flex gap-3">
+      <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+      <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+      <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+    </div>
+  </header>
+
+  <!-- MODES -->
+  <div class="px-6 mt-2">
+    <div class="grid grid-cols-3 bg-gray-100 rounded-full p-1 text-xs font-medium">
+      <button onclick="setMode('pomodoro')" id="pomodoroTab"
+        class="py-2 rounded-full bg-red-500 text-white shadow">Pomodoro</button>
+      <button onclick="setMode('short')" id="shortTab"
+        class="py-2 text-gray-500">Short Break</button>
+      <button onclick="setMode('long')" id="longTab"
+        class="py-2 text-gray-500">Long Break</button>
+    </div>
+  </div>
+
+  <!-- TIMER -->
+  <div class="flex-1 flex items-center justify-center">
+    <div class="relative w-64 h-64 flex items-center justify-center">
+      <div id="ring"
+        class="absolute inset-0 rounded-full border-[12px] border-red-100 transition-all">
+      </div>
+
+      <div id="center"
+        class="w-52 h-52 bg-red-50 rounded-full flex flex-col items-center justify-center shadow-inner transition">
+        <div id="time" class="text-6xl font-semibold text-red-600">25:00</div>
+        <div id="label" class="mt-2 text-xs uppercase tracking-widest text-red-400">
+          Focus Time
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="px-8 text-center space-y-2">
+    <div class="text-sm text-gray-500">Session <span id="session">1</span> of 4</div>
+    <div class="text-base font-medium text-gray-800">Working on: Deep Focus Task</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="px-8 mt-6 mb-8">
+    <button id="action"
+      onclick="toggleTimer()"
+      class="w-full py-4 bg-red-500 hover:bg-red-600 active:scale-[0.97]
+             text-white rounded-2xl text-lg font-semibold shadow-lg transition">
+      Start Focus
+    </button>
+
+    <button onclick="resetTimer()"
+      class="mt-3 w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition">
+      Reset
+    </button>
+  </div>
+
+</div>
+
+<script>
+let modes = {
+  pomodoro: 1500,
+  short: 300,
+  long: 900
+};
+
+let currentMode = "pomodoro";
+let timeLeft = modes.pomodoro;
+let totalTime = timeLeft;
+let running = false;
+let interval;
+let session = 1;
+
+const timeEl = document.getElementById("time");
+const ring = document.getElementById("ring");
+const center = document.getElementById("center");
+const actionBtn = document.getElementById("action");
+const label = document.getElementById("label");
+const sessionEl = document.getElementById("session");
+
+function updateDisplay() {
+  let m = Math.floor(timeLeft / 60);
+  let s = timeLeft % 60;
+  timeEl.textContent = `${m}:${s.toString().padStart(2,"0")}`;
+  let progress = (timeLeft / totalTime) * 100;
+  ring.style.borderColor = `rgba(239,68,68,${progress/100})`;
+}
+
+function toggleTimer() {
+  if (!running) {
+    running = true;
+    actionBtn.textContent = "Pause";
+    center.classList.add("pulse-running");
+
+    interval = setInterval(() => {
+      if (timeLeft > 0) {
+        timeLeft--;
+        updateDisplay();
+      } else {
+        clearInterval(interval);
+        running = false;
+        center.classList.remove("pulse-running");
+        actionBtn.textContent = "Start";
+        if (currentMode === "pomodoro") session++;
+        sessionEl.textContent = session;
+      }
+    }, 1000);
+  } else {
+    running = false;
+    clearInterval(interval);
+    center.classList.remove("pulse-running");
+    actionBtn.textContent = "Resume";
+  }
+}
+
+function resetTimer() {
+  clearInterval(interval);
+  running = false;
+  timeLeft = modes[currentMode];
+  totalTime = timeLeft;
+  updateDisplay();
+  actionBtn.textContent = "Start";
+  center.classList.remove("pulse-running");
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  resetTimer();
+
+  document.querySelectorAll("button").forEach(b => b.classList.remove("bg-red-500","text-white","shadow"));
+  document.getElementById(mode + "Tab").classList.add("bg-red-500","text-white","shadow");
+
+  label.textContent =
+    mode === "pomodoro" ? "Focus Time" :
+    mode === "short" ? "Short Break" : "Long Break";
+}
+
+updateDisplay();
+</script>
+
+</body>
+</html>
